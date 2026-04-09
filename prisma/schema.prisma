@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CARD
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  PAYMENT
+}
+
+model Institute {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String
+  email         String         @unique
+  phone         String
+  address       String
+  plan          Plan           @default(FREE)
+  trialEndsAt   DateTime?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         User[]
+  courses       Course[]
+  batches       Batch[]
+  students      Student[]
+  fees          Fee[]
+  payments      Payment[]
+  attendance    Attendance[]
+  subscriptions Subscription[]
+  activityLogs  ActivityLog[]
+}
+
+model User {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String
+  email           String         @unique
+  phone           String
+  password        String
+  role            UserRole
+  instituteId     String?        @db.Uuid
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
+  institute       Institute?     @relation(fields: [instituteId], references: [id])
+  createdCourses  Course[]       @relation("CourseCreatedBy")
+  createdBatches  Batch[]        @relation("BatchCreatedBy")
+  createdStudents Student[]      @relation("StudentCreatedBy")
+  createdFees     Fee[]          @relation("FeeCreatedBy")
+  createdPayments Payment[]      @relation("PaymentCreatedBy")
+  createdAttendance Attendance[] @relation("AttendanceCreatedBy")
+  assignedBatches Batch[]        @relation("BatchTeacher")
+  studentProfile  Student?       @relation("StudentUser")
+  activityLogs    ActivityLog[]
+
+  @@index([instituteId, role])
+  @@index([deletedAt])
+}
+
+model Course {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  duration    String
+  fees        Decimal   @db.Decimal(12, 2)
+  instituteId String    @db.Uuid
+  createdBy   String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  institute   Institute @relation(fields: [instituteId], references: [id])
+  creator     User      @relation("CourseCreatedBy", fields: [createdBy], references: [id])
+  batches     Batch[]
+  students    Student[]
+
+  @@index([instituteId, deletedAt])
+}
+
+model Batch {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  courseId    String    @db.Uuid
+  teacherId   String?   @db.Uuid
+  startTime   DateTime
+  endTime     DateTime
+  instituteId String    @db.Uuid
+  createdBy   String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  course      Course    @relation(fields: [courseId], references: [id])
+  teacher     User?     @relation("BatchTeacher", fields: [teacherId], references: [id])
+  institute   Institute @relation(fields: [instituteId], references: [id])
+  creator     User      @relation("BatchCreatedBy", fields: [createdBy], references: [id])
+  students    Student[]
+  attendance  Attendance[]
+
+  @@index([instituteId, deletedAt])
+}
+
+model Student {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @unique @db.Uuid
+  fatherName       String
+  enrollmentNumber String
+  courseId         String    @db.Uuid
+  batchId          String    @db.Uuid
+  instituteId      String    @db.Uuid
+  createdBy        String    @db.Uuid
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  user             User      @relation("StudentUser", fields: [userId], references: [id])
+  course           Course    @relation(fields: [courseId], references: [id])
+  batch            Batch     @relation(fields: [batchId], references: [id])
+  institute        Institute @relation(fields: [instituteId], references: [id])
+  creator          User      @relation("StudentCreatedBy", fields: [createdBy], references: [id])
+  fee              Fee?
+  attendance       Attendance[]
+
+  @@unique([instituteId, enrollmentNumber])
+  @@index([instituteId, deletedAt])
+}
+
+model Fee {
+  id          String    @id @default(uuid()) @db.Uuid
+  studentId   String    @unique @db.Uuid
+  totalAmount Decimal   @db.Decimal(12, 2)
+  paidAmount  Decimal   @default(0) @db.Decimal(12, 2)
+  dueAmount   Decimal   @db.Decimal(12, 2)
+  instituteId String    @db.Uuid
+  createdBy   String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  student     Student   @relation(fields: [studentId], references: [id])
+  institute   Institute @relation(fields: [instituteId], references: [id])
+  creator     User      @relation("FeeCreatedBy", fields: [createdBy], references: [id])
+  payments    Payment[]
+
+  @@index([instituteId, deletedAt])
+}
+
+model Payment {
+  id          String      @id @default(uuid()) @db.Uuid
+  feeId       String      @db.Uuid
+  amount      Decimal     @db.Decimal(12, 2)
+  paymentDate DateTime
+  mode        PaymentMode
+  instituteId String      @db.Uuid
+  createdBy   String      @db.Uuid
+  createdAt   DateTime    @default(now())
+  fee         Fee         @relation(fields: [feeId], references: [id])
+  institute   Institute   @relation(fields: [instituteId], references: [id])
+  creator     User        @relation("PaymentCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([instituteId, paymentDate])
+}
+
+model Attendance {
+  id          String           @id @default(uuid()) @db.Uuid
+  studentId   String           @db.Uuid
+  batchId     String           @db.Uuid
+  date        DateTime
+  status      AttendanceStatus
+  instituteId String           @db.Uuid
+  createdBy   String           @db.Uuid
+  createdAt   DateTime         @default(now())
+  student     Student          @relation(fields: [studentId], references: [id])
+  batch       Batch            @relation(fields: [batchId], references: [id])
+  institute   Institute        @relation(fields: [instituteId], references: [id])
+  creator     User             @relation("AttendanceCreatedBy", fields: [createdBy], references: [id])
+
+  @@unique([studentId, batchId, date])
+  @@index([instituteId, date])
+}
+
+model Subscription {
+  id          String             @id @default(uuid()) @db.Uuid
+  instituteId String             @db.Uuid
+  plan        Plan
+  status      SubscriptionStatus
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime           @default(now())
+  institute   Institute          @relation(fields: [instituteId], references: [id])
+
+  @@index([instituteId, status])
+}
+
+model ActivityLog {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String?        @db.Uuid
+  instituteId String?        @db.Uuid
+  action      ActivityAction
+  entity      String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+  user        User?          @relation(fields: [userId], references: [id])
+  institute   Institute?     @relation(fields: [instituteId], references: [id])
+
+  @@index([instituteId, action, createdAt])
+}
