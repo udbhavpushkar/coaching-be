@@ -1,26 +1,13 @@
-const swaggerJSDoc = require("swagger-jsdoc");
-
-const options = {
+const swaggerUiOptions = {
   explorer: true,
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "InstituteOS API",
-      version: "1.0.0",
-      description: "Multi-tenant Coaching ERP backend for India"
-    },
-    // components: {
-    //   securitySchemes: {
-    //     bearerAuth: {
-    //       type: "http",
-    //       scheme: "bearer",
-    //       bearerFormat: "JWT"
-    //     }
-    //   }
-    // },
-    // security: [{ bearerAuth: [] }],
-  },
-  apis: []
+  swaggerOptions: {
+    persistAuthorization: true
+  }
 };
 
-module.exports = swaggerJSDoc(options);
+const swaggerSpec = require("./openapi");
+
+module.exports = {
+  swaggerSpec,
+  swaggerUiOptions
+};

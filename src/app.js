@@ -7,7 +7,7 @@ const { corsOptions } = require("./config/cors");
 const routes = require("./routes");
 const { notFoundHandler, errorHandler } = require("./middlewares/error.middleware");
 const { successResponse } = require("./utils/response");
-const swaggerSpec = require("./config/swagger");
+const { swaggerSpec, swaggerUiOptions } = require("./config/swagger");
 
 const swaggerUi = require("swagger-ui-express");
 
@@ -26,7 +26,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 app.use("/api/v1", routes);
 
 app.use(notFoundHandler);
