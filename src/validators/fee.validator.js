@@ -7,7 +7,7 @@ const createFeeSchema = z.object({
 
 const recordPaymentSchema = z.object({
   amount: z.coerce.number().positive(),
-  paymentDate: z.coerce.date(),
+  paymentDate: z.coerce.date().optional(),
   mode: z.enum(["CASH", "UPI", "CARD"])
 });
 

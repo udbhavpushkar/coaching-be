@@ -61,7 +61,8 @@ const listFees = async (req, query) => {
           }
         },
         payments: {
-          orderBy: { paymentDate: "desc" }
+          orderBy: { paymentDate: "desc" },
+          take: 5
         }
       },
       orderBy: { createdAt: "desc" },
@@ -97,30 +98,47 @@ const getFeeById = async (req, feeId) => {
 };
 
 const recordPayment = async (req, feeId, payload) => {
-  const fee = await prisma.fee.findFirst({
-    where: withSoftDelete(getTenantWhere(req, { id: feeId }))
-  });
+  const paymentAmount = new Prisma.Decimal(payload.amount);
 
-  if (!fee) {
-    throw new ApiError(404, "Fee record not found");
+  if (paymentAmount.lte(0)) {
+    throw new ApiError(422, "Payment amount must be greater than zero");
   }
 
-  const totalAmount = Number(fee.totalAmount);
-  const paidAmount = Number(fee.paidAmount);
-  const nextPaidAmount = paidAmount + payload.amount;
+  const paymentDate = payload.paymentDate ? new Date(payload.paymentDate) : new Date();
 
-  if (nextPaidAmount > totalAmount) {
-    throw new ApiError(422, "Payment exceeds total fee amount");
+  if (Number.isNaN(paymentDate.getTime())) {
+    throw new ApiError(422, "Invalid payment date");
+  }
+
+  if (paymentDate > new Date()) {
+    throw new ApiError(422, "Payment date cannot be in the future");
   }
 
   const result = await prisma.$transaction(async (tx) => {
+    // Keep the read-validate-write cycle in one transaction so concurrent payments
+    // cannot both validate against the same stale fee balance.
+    const fee = await tx.fee.findFirst({
+      where: withSoftDelete(getTenantWhere(req, { id: feeId }))
+    });
+
+    if (!fee) {
+      throw new ApiError(404, "Fee record not found");
+    }
+
+    // Prisma returns Decimal values. Use Decimal arithmetic to avoid precision loss.
+    const nextPaidAmount = fee.paidAmount.add(paymentAmount);
+
+    if (nextPaidAmount.gt(fee.totalAmount)) {
+      throw new ApiError(422, "Payment exceeds total fee amount");
+    }
+
     const payment = await tx.payment.create({
       data: {
         feeId,
-        amount: payload.amount,
-        paymentDate: payload.paymentDate,
+        amount: paymentAmount,
+        paymentDate,
         mode: payload.mode,
-        instituteId: fee.instituteId,
+        instituteId: req.tenant.instituteId,
         createdBy: req.user.id
       }
     });
@@ -128,8 +146,8 @@ const recordPayment = async (req, feeId, payload) => {
     const updatedFee = await tx.fee.update({
       where: { id: feeId },
       data: {
-        paidAmount: new Prisma.Decimal(nextPaidAmount),
-        dueAmount: new Prisma.Decimal(totalAmount - nextPaidAmount)
+        paidAmount: nextPaidAmount,
+        dueAmount: fee.totalAmount.sub(nextPaidAmount)
       }
     });
 
@@ -138,11 +156,11 @@ const recordPayment = async (req, feeId, payload) => {
 
   await logActivity({
     userId: req.user.id,
-    instituteId: fee.instituteId,
+    instituteId: req.tenant.instituteId,
     action: "PAYMENT",
     entity: "PAYMENT",
     entityId: result.payment.id,
-    metadata: { feeId, amount: payload.amount, mode: payload.mode }
+    metadata: { feeId, amount: paymentAmount.toNumber(), mode: payload.mode }
   });
 
   return result;
@@ -169,9 +187,9 @@ const getFeeSummary = async (req) => {
   ]);
 
   return {
-    totalRevenue: Number(paymentAggregate._sum.amount || 0),
-    pendingDues: Number(feeAggregate._sum.dueAmount || 0),
-    totalFeeBooked: Number(feeAggregate._sum.totalAmount || 0)
+    totalRevenue: paymentAggregate._sum.amount?.toNumber() || 0,
+    pendingDues: feeAggregate._sum.dueAmount?.toNumber() || 0,
+    totalFeeBooked: feeAggregate._sum.totalAmount?.toNumber() || 0
   };
 };
 

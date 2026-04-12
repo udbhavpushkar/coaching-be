@@ -1,0 +1,427 @@
+{
+  "info": {
+    "name": "InstituteOS API",
+    "description": "Postman collection for InstituteOS backend APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "apiPrefix", "value": "/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "instituteId", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "courseId", "value": "" },
+    { "key": "batchId", "value": "" },
+    { "key": "studentId", "value": "" },
+    { "key": "feeId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.token) { pm.collectionVariables.set('token', json.data.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@instituteos.com\",\n  \"password\": \"ChangeMe123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Institutes",
+      "item": [
+        {
+          "name": "Create Institute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alpha Coaching\",\n  \"email\": \"alpha@example.com\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Delhi\",\n  \"plan\": \"BASIC\",\n  \"trialEndsAt\": \"2026-05-01T00:00:00.000Z\",\n  \"admin\": {\n    \"name\": \"Institute Admin\",\n    \"email\": \"admin.alpha@example.com\",\n    \"phone\": \"9876543211\",\n    \"password\": \"Admin@123\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/institutes"
+          }
+        },
+        {
+          "name": "List Institutes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/institutes?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Update Institute Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/institutes/{{instituteId}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teacher One\",\n  \"email\": \"teacher1@example.com\",\n  \"phone\": \"9876543222\",\n  \"password\": \"Teacher@123\",\n  \"role\": \"TEACHER\",\n  \"instituteId\": \"{{instituteId}}\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/users"
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/users?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}{{apiPrefix}}/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"JEE Advanced\",\n  \"description\": \"PCM intensive program\",\n  \"duration\": \"12 months\",\n  \"fees\": 85000\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/courses"
+          }
+        },
+        {
+          "name": "List Courses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/courses?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Course",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/courses/{{courseId}}"
+          }
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/courses/{{courseId}}"
+          }
+        },
+        {
+          "name": "Delete Course",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}{{apiPrefix}}/courses/{{courseId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Batches",
+      "item": [
+        {
+          "name": "Create Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Batch A\",\n  \"courseId\": \"{{courseId}}\",\n  \"teacherId\": \"{{userId}}\",\n  \"startTime\": \"2026-04-15T07:00:00.000Z\",\n  \"endTime\": \"2026-04-15T09:00:00.000Z\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/batches"
+          }
+        },
+        {
+          "name": "List Batches",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/batches?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Batch",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/batches/{{batchId}}"
+          }
+        },
+        {
+          "name": "Update Batch",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Batch Name\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/batches/{{batchId}}"
+          }
+        },
+        {
+          "name": "Delete Batch",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}{{apiPrefix}}/batches/{{batchId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "item": [
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"name\": \"Student One\",\n    \"email\": \"student1@example.com\",\n    \"phone\": \"9876543333\",\n    \"password\": \"Student@123\"\n  },\n  \"fatherName\": \"Parent One\",\n  \"enrollmentNumber\": \"ENR-1001\",\n  \"courseId\": \"{{courseId}}\",\n  \"batchId\": \"{{batchId}}\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/students"
+          }
+        },
+        {
+          "name": "List Students",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/students?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Student",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/students/{{studentId}}"
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fatherName\": \"Updated Parent Name\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/students/{{studentId}}"
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}{{apiPrefix}}/students/{{studentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fees",
+      "item": [
+        {
+          "name": "Create Fee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"totalAmount\": 85000\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/fees"
+          }
+        },
+        {
+          "name": "List Fees",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/fees?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Fee Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/fees/summary"
+          }
+        },
+        {
+          "name": "Get Fee",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/fees/{{feeId}}"
+          }
+        },
+        {
+          "name": "Record Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10000,\n  \"paymentDate\": \"2026-04-12T10:30:00.000Z\",\n  \"mode\": \"UPI\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/fees/{{feeId}}/payments"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Mark Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"batchId\": \"{{batchId}}\",\n  \"date\": \"2026-04-12T00:00:00.000Z\",\n  \"status\": \"PRESENT\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/attendance"
+          }
+        },
+        {
+          "name": "Attendance Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/attendance/report?page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/dashboard"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instituteId\": \"{{instituteId}}\",\n  \"plan\": \"PRO\",\n  \"status\": \"ACTIVE\",\n  \"startDate\": \"2026-04-12T00:00:00.000Z\",\n  \"endDate\": \"2027-04-12T00:00:00.000Z\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/subscriptions"
+          }
+        },
+        {
+          "name": "List Subscriptions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/subscriptions?page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activity Logs",
+      "item": [
+        {
+          "name": "List Activity Logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}{{apiPrefix}}/activity-logs?page=1&limit=10"
+          }
+        }
+      ]
+    }
+  ]
+}
