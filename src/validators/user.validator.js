@@ -9,6 +9,13 @@ const createUserSchema = z.object({
   instituteId: uuidSchema.optional()
 });
 
+const createSuperAdminSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().min(10).max(15),
+  password: z.string().min(8)
+});
+
 const userListQuerySchema = paginationQuerySchema.extend({
   role: z.enum(["SUPER_ADMIN", "ADMIN", "TEACHER", "STUDENT"]).optional(),
   instituteId: uuidSchema.optional()
@@ -20,6 +27,7 @@ const userIdParamSchema = z.object({
 
 module.exports = {
   createUserSchema,
+  createSuperAdminSchema,
   userListQuerySchema,
   userIdParamSchema
 };

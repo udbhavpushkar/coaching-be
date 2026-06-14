@@ -5,9 +5,11 @@ const { roleMiddleware } = require("../middlewares/role.middleware");
 const { tenantMiddleware } = require("../middlewares/tenant.middleware");
 const { asyncHandler } = require("../utils/async-handler");
 const { validate } = require("../middlewares/validate.middleware");
-const { createUserSchema, userListQuerySchema, userIdParamSchema } = require("../validators/user.validator");
+const { createUserSchema, createSuperAdminSchema, userListQuerySchema, userIdParamSchema } = require("../validators/user.validator");
 
 const router = express.Router();
+
+router.post("/super-admin", validate(createSuperAdminSchema), asyncHandler(userController.createSuperAdmin));
 
 router.use(authMiddleware, tenantMiddleware);
 router.post("/", roleMiddleware("SUPER_ADMIN", "ADMIN"), validate(createUserSchema), asyncHandler(userController.createUser));

@@ -6,6 +6,52 @@ const { buildSearchFilter, withSoftDelete } = require("../utils/query");
 const { getTenantWhere } = require("./base.service");
 const { logActivity } = require("../utils/activity-log");
 
+const userSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  role: true,
+  instituteId: true,
+  createdAt: true,
+  updatedAt: true
+};
+
+const createSuperAdmin = async (payload) => {
+  const existingSuperAdmin = await prisma.user.findFirst({
+    where: {
+      role: "SUPER_ADMIN",
+      deletedAt: null
+    }
+  });
+
+  if (existingSuperAdmin) {
+    throw new ApiError(409, "Super admin already exists");
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: payload.email }
+  });
+
+  if (existingUser) {
+    throw new ApiError(409, "User email already exists");
+  }
+
+  const password = await hashPassword(payload.password);
+
+  return prisma.user.create({
+    data: {
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      password,
+      role: "SUPER_ADMIN",
+      instituteId: null
+    },
+    select: userSelect
+  });
+};
+
 const createUser = async (req, payload) => {
   const instituteId = req.user.role === "SUPER_ADMIN" ? payload.instituteId || null : req.tenant.instituteId;
 
@@ -122,6 +168,7 @@ const softDeleteUser = async (req, userId) => {
 };
 
 module.exports = {
+  createSuperAdmin,
   createUser,
   listUsers,
   softDeleteUser

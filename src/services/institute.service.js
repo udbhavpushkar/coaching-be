@@ -7,12 +7,12 @@ const { buildSearchFilter } = require("../utils/query");
 const createInstitute = async (payload, actor) => {
   const existingInstitute = await prisma.institute.findFirst({
     where: {
-      OR: [{ email: payload.email }, { users: { some: { email: payload.admin.email } } }]
+      OR: [{ email: payload.email }, { username: payload.username }, { users: { some: { email: payload.admin.email } } }]
     }
   });
 
   if (existingInstitute) {
-    throw new ApiError(409, "Institute or admin email already exists");
+    throw new ApiError(409, "Institute email, username, or admin email already exists");
   }
 
   const adminPassword = await hashPassword(payload.admin.password);
@@ -22,6 +22,7 @@ const createInstitute = async (payload, actor) => {
       data: {
         name: payload.name,
         email: payload.email,
+        username: payload.username,
         phone: payload.phone,
         address: payload.address,
         plan: payload.plan,
@@ -68,7 +69,7 @@ const createInstitute = async (payload, actor) => {
 const listInstitutes = async (query) => {
   const { page, limit, skip } = buildPagination(query);
   const where = {
-    ...buildSearchFilter(query.search, ["name", "email", "phone"]),
+    ...buildSearchFilter(query.search, ["name", "email", "username", "phone"]),
     ...(query.isActive === undefined ? {} : { isActive: query.isActive })
   };
 

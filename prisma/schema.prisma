@@ -49,6 +49,7 @@ model Institute {
   id            String         @id @default(uuid()) @db.Uuid
   name          String
   email         String         @unique
+  username      String         @unique
   phone         String
   address       String
   plan          Plan           @default(FREE)

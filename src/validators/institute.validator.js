@@ -3,6 +3,7 @@ const { z, paginationQuerySchema, uuidSchema } = require("./common.validator");
 const createInstituteSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
+  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, hyphens, and underscores"),
   phone: z.string().min(10).max(15),
   address: z.string().min(5),
   plan: z.enum(["FREE", "BASIC", "PRO"]).default("FREE"),

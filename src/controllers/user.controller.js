@@ -1,6 +1,15 @@
 const userService = require("../services/user.service");
 const { successResponse } = require("../utils/response");
 
+const createSuperAdmin = async (req, res) => {
+  const data = await userService.createSuperAdmin(req.body);
+  return successResponse(res, {
+    statusCode: 201,
+    message: "Super admin created successfully",
+    data
+  });
+};
+
 const createUser = async (req, res) => {
   const data = await userService.createUser(req, req.body);
   return successResponse(res, {
@@ -28,6 +37,7 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
+  createSuperAdmin,
   createUser,
   listUsers,
   deleteUser
